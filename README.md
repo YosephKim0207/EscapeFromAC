@@ -19,10 +19,11 @@
 
 ### 오브젝트 풀링
 
+![오브젝트풀링 성능테스트](https://user-images.githubusercontent.com/46564046/235351089-926c57bd-8237-45f6-97b5-52238a8c8360.gif)
 
-### 부위파위 및 HP에 따른 능력치 조정
 
 - 원하는 클래스에 대한 오브젝트 풀을 자유롭게 생성 및 사용
+- 프로파일러 기준 평균 게임 스레드 비용 2.43ms 감소
 
 [PoolManager 전체 코드 바로가기](https://github.com/YosephKim0207/EscapeFromAC/blob/main/Source/EscapeFromAC/A_PoolManager.h)
 <details>
@@ -115,3 +116,380 @@ T* AA_PoolManager::GetThisObject(UClass* Class, const FVector& Location, const F
 ### 모듈식 캐릭터 생성
 
 - 포즈복사, 메시병합 대비 구성 비용 및 게임 스레드 비용이 낮은 마스터 포즈 컴포넌트 이용
+
+### 부위 파괴 및 능력치에 따른 기능 저하 구현
+
+[A_Chracter 전체 코드 바로가기](https://github.com/YosephKim0207/EscapeFromAC/blob/main/Source/EscapeFromAC/A_Character.cpp)
+<details>
+<summary>CheckEachPartPerformance 구현부 펼치기</summary>
+
+
+```cpp
+void AA_Character::CheckEachPartPerformance()
+{
+	for(FModularItemStatData* Part : PartsData)
+	{
+		float CurrentHP = Part->HP;
+		float MaxHP = Part->MaxHP;
+
+		// if CurrentHP is under 50% of MaxHP
+		if(CurrentHP * 2.0f > MaxHP)
+		{
+			EModular CheckingModularPart = Part->Parts;
+			switch (CheckingModularPart)
+			{
+			case EModular::EUpperBody:
+				UpperBodyDefense = UpperBodyData.Defense * 0.5f;
+				break;
+				
+			case EModular::ELowerBody:
+				LowerBodyDefense = LowerBodyData.Defense * 0.5f;
+				MovementComponent->MaxWalkSpeed = OriginalMaxWalkSpeed * 0.8f;
+				break;
+
+			case EModular::EHead:
+				HeadDefense = 0.0f;
+				HeadGunHeatCoolingRate = HeadData.GunHeatCoolingRate * 0.8f;
+				break;
+				
+			case EModular::ELeftArm:
+				LeftArmShootTerm = LeftArmData.ShootTerm * 0.8f;
+				break;
+				
+			case EModular::ERightArm:
+				RightArmShootTerm = RightArmData.ShootTerm * 0.8f;
+				break;
+			}
+		}
+		else
+		{
+			EModular CheckingModularPart = Part->Parts;
+			switch (CheckingModularPart)
+			{
+				// Decrease MaxWalkSpeed
+			case EModular::EUpperBody:
+				UpperBodyDefense = UpperBodyData.Defense;
+				break;
+				
+			case EModular::ELowerBody:
+				LowerBodyDefense = LowerBodyData.Defense;
+				MovementComponent->MaxWalkSpeed = OriginalMaxWalkSpeed;
+				break;
+
+				// Decrease ShootTerm
+			case EModular::EHead:
+				HeadDefense = HeadData.Defense;
+				HeadGunHeatCoolingRate = HeadData.GunHeatCoolingRate;
+				break;
+				
+			case EModular::ELeftArm:
+				LeftArmShootTerm = LeftArmData.ShootTerm;
+				break;
+				
+			case EModular::ERightArm:
+				RightArmShootTerm = RightArmData.ShootTerm;
+				break;
+			}
+		}
+	}
+}
+```
+
+</details>
+
+<details>
+<summary>RefreshModularParts_Implementation 구현부 펼치기</summary>
+
+
+```cpp
+void AA_Character::RefreshModularParts_Implementation()
+{
+	for(FDataTableRowHandle PartPickupItem : ModularInventory)
+	{
+		FName PickupItemRowName = PartPickupItem.RowName;
+		FPickupItemData* PickupItemData = PartPickupItem.DataTable->FindRow<FPickupItemData>(PickupItemRowName, "");
+
+		if(PickupItemData != nullptr)
+		{
+			if(PickupItemData->ItemType != EItemType::EModular)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("%s : This Item is Not Modular Item"), *PickupItemRowName.ToString());
+				return;
+			}
+			
+			UE_LOG(LogTemp, Log, TEXT("%s : PartPickupItem find in Row"), *PickupItemRowName.ToString());
+
+			FName ModularItemRowName = PickupItemData->SelectItemStatDataTable.RowName;
+			FModularItemStatData* ModularItemStatData = PickupItemData->SelectItemStatDataTable.DataTable->FindRow<FModularItemStatData>(ModularItemRowName, ""); 
+			
+			if(ModularItemStatData != nullptr)
+			{
+				UE_LOG(LogTemp, Log, TEXT("%s : ModularItem find in Row"), *ModularItemRowName.ToString());
+	
+				SetEachModularPartStat(*ModularItemStatData);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("%s : ModularItem Can't find in Row"), *ModularItemRowName.ToString());
+				return;
+			}
+
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("%s : PartPickupItem Can't find Row"), *PickupItemRowName.ToString());
+			return;
+		}
+	}
+
+	// Set Total Weight
+	TotalWeight = HeadData.Weight + UpperBodyData.Weight + LeftArmData.Weight + RightArmData.Weight + LowerBodyData.Weight;
+
+	// Fix MaxWalkSpeed by MaxWeight divided by TotalWeight
+	float MaxDividedTotalWeightRate = MaxWeight / TotalWeight;
+	float MaxWalkSpeedRatePerWeight = 1.0f;
+	if(MaxDividedTotalWeightRate < MaxWalkSpeedRatePerWeight)
+	{
+		MaxWalkSpeedRatePerWeight = MaxDividedTotalWeightRate;
+		MovementComponent->MaxWalkSpeed = OriginalMaxWalkSpeed * MaxWalkSpeedRatePerWeight;
+	}
+	else
+	{
+		MovementComponent->MaxWalkSpeed = OriginalMaxWalkSpeed;
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("%s : MaxWeight is %f"), *GetName(), MaxWeight);
+	UE_LOG(LogTemp, Log, TEXT("%s : TotalWeight is %f"), *GetName(), TotalWeight);
+	UE_LOG(LogTemp, Log, TEXT("%s : MaxDividedTotalWeightRate is %f"), *GetName(), MaxDividedTotalWeightRate);
+	UE_LOG(LogTemp, Log, TEXT("%s : MaxWalkSpeed is %f"), *GetName(), MovementComponent->MaxWalkSpeed);
+	
+	// Set Total Defense
+	TotalDefense = HeadData.Defense + UpperBodyData.Defense + LowerBodyData.Defense;
+}
+```
+
+</details>
+
+
+### 언리얼 자체 컴포넌트 내 함수를 활용한 기능 구현
+
+[A_Chracter 전체 코드 바로가기](https://github.com/YosephKim0207/EscapeFromAC/blob/main/Source/EscapeFromAC/A_Character.cpp)
+<details>
+<summary>InternalTakePointDamage 구현부 펼치기</summary>
+
+
+```cpp
+float AA_Character::InternalTakePointDamage(float Damage, FPointDamageEvent const& PointDamageEvent,
+	AController* EventInstigator, AActor* DamageCauser)
+{
+	float ActualDamage = Damage;
+	FPointDamageEvent DamageEvent = PointDamageEvent;
+	
+	FString BoneName = PointDamageEvent.HitInfo.BoneName.ToString();
+
+	if(BoneName.Compare(TEXT("None")) == 0)
+	{
+		UE_LOG(LogTemp, Log, TEXT("%s : Projectile Hit to %s"), *GetName(), *BoneName);
+		return ActualDamage;
+	}
+	
+	switch(DamageMap[BoneName])
+	{
+	case EModular::EHead:
+		UE_LOG(LogTemp, Log, TEXT("InternalTakePointDamage : Head Hit!"));
+
+		ActualDamage -= FMath::RoundToFloat(HeadDefense * 0.1f);
+		
+		// MaxHP = 40
+		// Dead
+		if(HeadData.HP <= 0.0f)
+		{
+			UE_LOG(LogTemp, Log, TEXT("%s Kill : %s"), *EventInstigator->GetName(), *GetName());
+			SetCharacterState(ECharacterState::EDead);
+			ImpulseToRagdoll(DamageEvent);
+		}
+		else
+		{
+			if(ActualDamage > HeadData.HP)
+			{
+				ActualDamage = HeadData.HP;
+			}
+			HeadData.HP -= (ActualDamage);
+		}
+		break;
+		
+	case EModular::EUpperBody:
+		UE_LOG(LogTemp, Log, TEXT("Upper Body Hit!"));
+
+		ActualDamage -= FMath::RoundToFloat(UpperBodyDefense * 0.1f);
+		// MaxHP = 70
+		// Broken
+		if(UpperBodyData.HP <= 0.0f)
+		{
+			ActualDamage = DamageSpreadToOtherParts(EModular::EUpperBody, ActualDamage, DamageEvent);
+		}
+		else
+		{
+			if(ActualDamage > UpperBodyData.HP)
+			{
+				ActualDamage = UpperBodyData.HP;
+			}
+			UpperBodyData.HP -= ActualDamage;
+		}
+		UE_LOG(LogTemp, Log, TEXT("HP : %f"), UpperBodyData.HP);
+		break;
+		
+	case EModular::ELeftArm:
+		UE_LOG(LogTemp, Log, TEXT("Left Arm Hit!"));
+
+		// MaxHP = 60
+		// Broken
+		if(LeftArmData.HP <= 0.0f)
+		{
+			ActualDamage = DamageSpreadToOtherParts(EModular::ELeftArm, ActualDamage, DamageEvent);
+		}
+		else
+		{
+			if(ActualDamage > LeftArmData.HP)
+			{
+				ActualDamage = LeftArmData.HP;
+			}
+			LeftArmData.HP -= ActualDamage;
+		}
+		break;
+		
+	case EModular::ERightArm:
+		UE_LOG(LogTemp, Log, TEXT("Right Arm Hit!"));
+
+		// MaxHP = 60
+		// Broken
+		if(RightArmData.HP <= 0.0f)
+		{
+			ActualDamage = DamageSpreadToOtherParts(EModular::ERightArm, ActualDamage, DamageEvent);
+		}
+		else
+		{
+			if(ActualDamage > RightArmData.HP)
+			{
+				ActualDamage = RightArmData.HP;
+			}
+			RightArmData.HP -= ActualDamage;
+		}
+		break;
+		
+	case EModular::ELowerBody:
+		UE_LOG(LogTemp, Log, TEXT("Lower Body Hit!"));
+
+		ActualDamage -= FMath::RoundToFloat(LowerBodyDefense * 0.1f);
+		
+		// MaxHP = 60
+		// Broken
+		if(LowerBodyData.HP <= 0.0f)
+		{
+			ActualDamage = DamageSpreadToOtherParts(EModular::ELowerBody, ActualDamage, DamageEvent);
+		}
+		else
+		{
+			if(ActualDamage > LowerBodyData.HP)
+			{
+				ActualDamage = LowerBodyData.HP;
+			}
+			LowerBodyData.HP -= ActualDamage;
+		}
+		break;
+	}
+
+	// TODO
+	// Dead State 만들기
+	if(HeadData.HP <= 0.0f)
+	{
+		UE_LOG(LogTemp, Log, TEXT("%s Kill : %s"), *DamageCauser->GetName(), *GetName());
+		SetCharacterState(ECharacterState::EDead);
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("%s : Hit %f Damage by %s!"), *GetName(), ActualDamage, *EventInstigator->GetName());
+	
+	return ActualDamage;
+}
+```
+
+</details>
+
+<details>
+<summary>CheckJumpInput 구현부 펼치기</summary>
+
+
+
+```cpp
+void AA_Character::CheckJumpInput(float DeltaTime)
+{
+	if(bIsBoostOverHeat)
+	{
+		if(GetBoostHeat() <= 0.0f)
+		{
+			bIsBoostOverHeat = false;
+		}
+		
+		SetBoostHeat(-(MaxBoostHeat/GetMaxBoostOverHeatCoolTime()) * DeltaTime);
+		
+		return;
+	}
+	
+	Super::CheckJumpInput(DeltaTime);
+	
+	if(bPressedJump)
+	{
+		BoostEffect();
+		SetBoostHeat(DeltaTime);
+		if(GetBoostHeat() >= MaxBoostHeat)
+		{
+			UE_LOG(LogTemp, Log, TEXT("bIsBoostOverHeat"));
+			bIsBoostOverHeat = true;
+			bPressedJump = false;
+		}
+	}
+	else
+	{
+		if(!bPressedJump && !bIsBoostOverHeat && GetBoostHeat() >= 0.0f)
+		{
+			SetBoostHeat(-DeltaTime * BoostHeatReduceRate);
+		}
+	}
+}
+```
+
+</details>
+
+<details>
+<summary>CheckJumpInput 구현부 펼치기</summary>
+
+
+
+```cpp
+void AA_Character::ResetJumpState()
+{
+	
+	// OnMovementModChanged Function will Try ResetJumpState
+	// But Do not Reset Jump State because multiple Jump
+	
+	if(bIsBoostOverHeat || GetCharacterMovement()->IsFalling())
+	{
+		UE_LOG(LogTemp, Log, TEXT("ResetJumpState_return 1"));
+		return;
+	}
+
+	if(GetCharacterMovement()->IsFalling())
+	{
+		UE_LOG(LogTemp, Log, TEXT("ResetJumpState_IsFalling"));
+		bWasJumping = false;
+	}
+	
+	if(GetBoostHeat() <= 0.0f)
+	{
+		UE_LOG(LogTemp, Log, TEXT("ResetJumpState_Super"));
+		Super::ResetJumpState();
+	}
+}
+```
+
+</details>
