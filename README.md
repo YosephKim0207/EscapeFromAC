@@ -24,8 +24,7 @@
 
 - 원하는 클래스에 대한 오브젝트 풀을 자유롭게 생성 및 사용
 
-[PoolManager 전체 코드 바로가기]
-(https://github.com/YosephKim0207/EscapeFromAC/blob/main/Source/EscapeFromAC/A_PoolManager.h)
+[PoolManager 전체 코드 바로가기](https://github.com/YosephKim0207/EscapeFromAC/blob/main/Source/EscapeFromAC/A_PoolManager.h)
 <details>
 <summary>PoolManager 구현 템플릿 코드 펼치기</summary>
 
