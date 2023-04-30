@@ -461,7 +461,7 @@ void AA_Character::CheckJumpInput(float DeltaTime)
 </details>
 
 <details>
-<summary>CheckJumpInput 구현부 펼치기</summary>
+<summary>ResetJumpState 구현부 펼치기</summary>
 
 
 
