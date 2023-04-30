@@ -42,7 +42,7 @@ protected:
 
 	virtual void LeftArmFire() override;
 
-	virtual void DoAfterDead(const float& DeltaSeconds) override;
+	virtual void DoAfterDead(const float& DeltaSecond) override;
 	
 private:
 	// // Player's Default Game Widget

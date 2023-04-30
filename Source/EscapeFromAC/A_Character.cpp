@@ -97,7 +97,7 @@ void AA_Character::BeginPlay()
 	UE_LOG(LogTemp, Log, TEXT("BeginPlay : MXBoostHeat : %lf, JumpMXHld : %lf."), MaxBoostHeat, JumpMaxHoldTime);
 }
 
-void AA_Character::DoAfterDead(const float& DeltaSeconds)
+void AA_Character::DoAfterDead(const float& DeltaSecond)
 {
 	return;
 }

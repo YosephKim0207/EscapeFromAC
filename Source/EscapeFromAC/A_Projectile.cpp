@@ -37,7 +37,7 @@ AA_Projectile::AA_Projectile()
 	ProjectileMovementComponent->InitialSpeed = 1200.0f;
 	ProjectileMovementComponent->MaxSpeed = 1200.0f;
 	ProjectileMovementComponent->Velocity = FVector::ZeroVector;
-	ProjectileMovementComponent->bShouldBounce = true;
+	ProjectileMovementComponent->bShouldBounce = false;
 
 	ProjectileMovementComponent->bRotationFollowsVelocity = true;
 }
@@ -56,20 +56,6 @@ float AA_Projectile::GetProjectileDamage()
 void AA_Projectile::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// TODO PoolTEST
-	// SphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	// AActor* Owner = GetOwner();
-	// if(Cast<AC_Player>(Owner))
-	// {
-	// 	SphereComponent->BodyInstance.SetCollisionProfileName(TEXT("Projectile_Player"));
-	// 	UE_LOG(LogTemp, Log, TEXT("Set %s's Collisioin Profile : %s"), *GetName(), *StaticMeshComponent->BodyInstance.GetCollisionProfileName().ToString());
-	// }
-	// else if(Cast<AA_EnemyDefault>(Owner))
-	// {
-	// 	SphereComponent->BodyInstance.SetCollisionProfileName(TEXT("Projectile_Enemy"));
-	// 	UE_LOG(LogTemp, Log, TEXT("Set %s's Collisioin Profile : %s"), *GetName(), *StaticMeshComponent->BodyInstance.GetCollisionProfileName().ToString());
-	// }
 }
 
 void AA_Projectile::SetActorHiddenInGame(bool IsNewHiddenState)
@@ -173,16 +159,9 @@ void AA_Projectile::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimi
 		}
 	}
 	
-	if(HitResult.GetActor() != GetOwner())
-	{
-		// TODO PoolTEST
-		SetActorHiddenInGame(true);
-		UE_LOG(LogTemp, Log, TEXT("Projectile : %s is Hidden"), *GetName());
-		// TODO PoolTest
-		// Destroy();
-	}
 	
-	
+	SetActorHiddenInGame(true);
+	UE_LOG(LogTemp, Log, TEXT("Projectile : %s is Hidden"), *GetName());
 }
 
 // Called every frame

@@ -177,7 +177,7 @@ protected:
 
 	/** Called when After Character is Dead */
 	UFUNCTION()
-	virtual void DoAfterDead(const float& DeltaSeconds);
+	virtual void DoAfterDead(const float& DeltaSecond);
 	
 	UFUNCTION()
 	virtual void RightArmFire();

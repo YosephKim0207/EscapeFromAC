@@ -104,7 +104,7 @@ void AA_EnemyDefault::StopFire()
 	OnStopFire.Broadcast();
 }
 
-void AA_EnemyDefault::DoAfterDead(const float& DeltaSeconds)
+void AA_EnemyDefault::DoAfterDead(const float& DeltaSecond)
 {
 	if(bAIOnPossess)
 	{
@@ -114,13 +114,13 @@ void AA_EnemyDefault::DoAfterDead(const float& DeltaSeconds)
 		UE_LOG(LogTemp, Log, TEXT("%s : UnPossess!"), *GetName());
 	}
 	
-	if(DestroyActorCountDown > 0.0f)
+	if(!bAIOnPossess && DestroyActorCountDown > 0.0f)
 	{
-		DestroyActorCountDown -= DeltaSeconds;
+		DestroyActorCountDown -= DeltaSecond;
 	}
 	else
 	{
-		DropBag();
+		DropBag(BagDropLocation);
 		
 		UE_LOG(LogTemp, Log, TEXT("%s : Destroy!"), *GetName());
 		Destroy();
@@ -131,6 +131,8 @@ void AA_EnemyDefault::ImpulseToRagdoll(const FPointDamageEvent& PointDamageEvent
 {
 	Super::ImpulseToRagdoll(PointDamageEvent);
 
+	BagDropLocation = GetActorLocation() + FVector(0, 0, 5.0f);
+	
 	if(NPCIsDead.IsBound())
 	{
 		NPCIsDead.Execute();
@@ -209,7 +211,7 @@ float AA_EnemyDefault::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 	return Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 }
 
-void AA_EnemyDefault::DropBag()
+void AA_EnemyDefault::DropBag(const FVector& ActorLocation)
 {
 	UACGameInstance* ACGameInstance = Cast<UACGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
 

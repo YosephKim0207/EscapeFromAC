@@ -209,8 +209,8 @@ void AC_Player::LeftArmFire()
 		// DrawDebugLine(GetWorld(), TempLocation_Camera, TempLocation_TraceEnd, FColor::Orange, false, 2.0f);
 
 		GetWorld()->LineTraceSingleByChannel(LineTraceOut, TraceStart, TraceEnd, ECC_Visibility, TraceParams);
-		DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Orange, false, 2.0f);
-		DrawDebugLine(GetWorld(), ProjectileRespawnLocation, LineTraceOut.Location, FColor::Red, false, 2.0f);
+		// DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Orange, false, 2.0f);
+		// DrawDebugLine(GetWorld(), ProjectileRespawnLocation, LineTraceOut.Location, FColor::Red, false, 2.0f);
 		
 		
 		if(LineTraceOut.bBlockingHit)
@@ -232,7 +232,7 @@ void AC_Player::LeftArmFire()
 	Super::LeftArmFire();
 }
 
-void AC_Player::DoAfterDead(const float& DeltaSeconds)
+void AC_Player::DoAfterDead(const float& DeltaSecond)
 {
 	if(bControllerIsAttached)
 	{
@@ -244,7 +244,7 @@ void AC_Player::DoAfterDead(const float& DeltaSeconds)
 	}
 	else
 	{
-		RespawnTime -= DeltaSeconds;
+		RespawnTime -= DeltaSecond;
 
 		if(RespawnTime < 0.0f)
 		{

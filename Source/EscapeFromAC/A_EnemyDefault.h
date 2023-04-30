@@ -51,7 +51,7 @@ public:
 	FMoveTo MoveTo;
 
 protected:
-	virtual void DoAfterDead(const float& DeltaSeconds) override;
+	virtual void DoAfterDead(const float& DeltaSecond) override;
 	
 	virtual void ImpulseToRagdoll(const FPointDamageEvent& PointDamageEvent) override;
 
@@ -77,14 +77,17 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Drop Item", meta = (AllowPrivateAccess = true))
 	int32 DropInventoryVolume = 20;
 
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, meta = (AllowPrivateAccess))
-	int32 DestroyActorCountDown = 7.0f;
+	UPROPERTY()
+	FVector BagDropLocation;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (AllowPrivateAccess))
+	float DestroyActorCountDown = 2.0f;
 
 	UPROPERTY()
 	bool bAIOnPossess = true;
 	
 	UFUNCTION()
-	void DropBag();
+	void DropBag(const FVector& ActorLocation);
 
 	/**
 	 * 1. Define Bag Level

@@ -5,21 +5,21 @@
 
 #include "A_PoolManager.h"
 #include "C_Player.h"
-#include "ToolBuilderUtil.h"
+// #include "ToolBuilderUtil.h"
 #include "Blueprint/UserWidget.h"
 #include "Engine/DataTable.h"
 #include "Kismet/GameplayStatics.h"
 
 UACGameInstance::UACGameInstance()
 {
-	FString PlayerBPPath = TEXT("Blueprint'/Game/BluePrint/BP_Player.BP_Player'");
+	FString PlayerBPPath = TEXT("/Game/BluePrint/BP_Player");
 	static ConstructorHelpers::FObjectFinder<UBlueprint> BP_Player(*PlayerBPPath);
 	if(BP_Player.Succeeded())
 	{
 		Player = BP_Player.Object->GeneratedClass;
 	}
 	
-	FString PickupDataTablePath = TEXT("DataTable'/Game/BluePrint/DataTable/DT_PickupItemData.DT_PickupItemData'");
+	FString PickupDataTablePath = TEXT("DataTable'/Game/BluePrint/DataTable/DT_PickupItemData'");
 	static ConstructorHelpers::FObjectFinder<UDataTable> DT_Pickup(*PickupDataTablePath);
 	if(DT_Pickup.Succeeded())
 	{
@@ -27,7 +27,7 @@ UACGameInstance::UACGameInstance()
 		PickupItemRowNames = PickupDataTable->GetRowNames();
 	}
 
-	FString BagPath = TEXT("Blueprint'/Game/BluePrint/PickupItem/BP_Bag.BP_Bag'");
+	FString BagPath = TEXT("/Game/BluePrint/PickupItem/BP_Bag");
 	static ConstructorHelpers::FObjectFinder<UBlueprint> BP_Bag(*BagPath);
 	if(BP_Bag.Succeeded())
 	{
