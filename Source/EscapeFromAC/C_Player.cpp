@@ -44,7 +44,7 @@ AC_Player::AC_Player()
 	Camera->bUsePawnControlRotation = false;
 
 	bIsLineTrace = false;
-	bItemEmpasis = false;
+	bIsItemEmphasis = false;
 }
 
 void AC_Player::BeginPlay()
@@ -53,8 +53,6 @@ void AC_Player::BeginPlay()
 
 	GetWorld()->GetFirstPlayerController()->Possess(this);
 	PlayerController = GetController();
-	// EObjectFlags ObjectFlags;
-	// CollectGarbage(ObjectFlags);
 }
 
 /** Set bIsLineTrace For Interaction with Item */
@@ -101,7 +99,7 @@ void AC_Player::CheckFieldItem()
 				// UE_LOG(LogTemp, Log, TEXT("Chek Field Item : %s"), *Item->GetName());
 
 				//TODO
-				if(!bItemEmpasis)
+				if(!bIsItemEmphasis)
 				{
 					// Item에 protected 변수로 IsBag을 만들어두고 true면 Blueprint에서 Bag Invetory 재생
 					//false면 아이템 습득
@@ -148,23 +146,28 @@ void AC_Player::RightArmFire()
 		FVector TraceEnd = TraceStart + (TempRotatorCamera.Vector() * ShootRange);
 		
 			
-		FHitResult LineTraceOut;
+		FHitResult LineTraceOutFromCrossFire;
+		FHitResult LineTraceOutFromArm;
 		FCollisionQueryParams TraceParams;
-		GetWorld()->LineTraceSingleByChannel(LineTraceOut, TempLocationCamera, TempLocationTraceEnd, ECC_Visibility, TraceParams);
-		// DrawDebugLine(GetWorld(), TempLocation_Camera, TempLocation_TraceEnd, FColor::Orange, false, 2.0f);
-
-		GetWorld()->LineTraceSingleByChannel(LineTraceOut, TraceStart, TraceEnd, ECC_Visibility, TraceParams);
-		DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Orange, false, 5.0f);
-		DrawDebugLine(GetWorld(), ProjectileRespawnLocation, LineTraceOut.Location, FColor::Red, false, 2.0f);
+		GetWorld()->LineTraceSingleByChannel(LineTraceOutFromCrossFire, TempLocationCamera, TempLocationTraceEnd, ECC_Visibility, TraceParams);
+		GetWorld()->LineTraceSingleByChannel(LineTraceOutFromArm, TraceStart, TraceEnd, ECC_Visibility, TraceParams);
+		DrawDebugLine(GetWorld(), TraceStart, LineTraceOutFromCrossFire.ImpactPoint, FColor::Orange, false, 5.0f);
+		DrawDebugLine(GetWorld(), ProjectileRespawnLocation, LineTraceOutFromArm.ImpactPoint, FColor::Red, false, 2.0f);
 		
 		
-		if(LineTraceOut.bBlockingHit)
+		if(LineTraceOutFromArm.bBlockingHit && LineTraceOutFromCrossFire.ImpactPoint == LineTraceOutFromArm.ImpactPoint)
 		{
-			FVector TraceImpactPoint = LineTraceOut.ImpactPoint;
+			FVector TraceImpactPoint = LineTraceOutFromArm.ImpactPoint;
+			ProjectileShootRotator = (TraceImpactPoint - ProjectileRespawnLocation).Rotation();
+		}
+		else if(LineTraceOutFromCrossFire.bBlockingHit && LineTraceOutFromArm.bBlockingHit)
+		{
+			FVector TraceImpactPoint = LineTraceOutFromArm.ImpactPoint;
 			ProjectileShootRotator = (TraceImpactPoint - ProjectileRespawnLocation).Rotation();
 		}
 		else
 		{
+			TempLocationTraceEnd = TempLocationCamera + (TempRotatorCamera.Vector() * ShootRange * 0.25f);
 			ProjectileShootRotator = (TempLocationTraceEnd - ProjectileRespawnLocation).Rotation();
 		}
 		
@@ -191,36 +194,44 @@ void AC_Player::LeftArmFire()
 	// Shoot LineTrace for Shoot Aim
 	if(PlayerController)
 	{
-		FVector TempLocation_Camera;
-		FVector TempLocation_TraceEnd;
-		FRotator TempRotator_Camera;
+		FVector TempLocationCamera;
+		FVector TempLocationTraceEnd;
+		FRotator TempRotatorCamera;
 
-		PlayerController->GetPlayerViewPoint(TempLocation_Camera, TempRotator_Camera);
+		PlayerController->GetPlayerViewPoint(TempLocationCamera, TempRotatorCamera);
 
-		TempLocation_TraceEnd = TempLocation_Camera + (TempRotator_Camera.Vector() * ShootRange);
+		TempLocationTraceEnd = TempLocationCamera + (TempRotatorCamera.Vector() * ShootRange);
 
+		// DrawDebugLine(GetWorld(), TempLocation_Camera, TempLocation_TraceEnd, FColor::Purple, false, 5.0f);
+		
 		// Ref : https://forums.unrealengine.com/t/third-person-shooter-aiming-at-crosshair/129180/6
-		FVector TraceStart = UKismetMathLibrary::ProjectPointOnToPlane(TempLocation_Camera, ProjectileRespawnLocation, TempRotator_Camera.Vector());
-		FVector TraceEnd = TraceStart + (TempRotator_Camera.Vector() * ShootRange);
+		FVector TraceStart = UKismetMathLibrary::ProjectPointOnToPlane(TempLocationCamera, ProjectileRespawnLocation, TempRotatorCamera.Vector());
+		FVector TraceEnd = TraceStart + (TempRotatorCamera.Vector() * ShootRange);
+		
 			
-		FHitResult LineTraceOut;
+		FHitResult LineTraceOutFromCrossFire;
+		FHitResult LineTraceOutFromArm;
 		FCollisionQueryParams TraceParams;
-		// GetWorld()->LineTraceSingleByChannel(LineTraceOut, TempLocation_Camera, TempLocation_TraceEnd, ECC_Visibility, TraceParams);
-		// DrawDebugLine(GetWorld(), TempLocation_Camera, TempLocation_TraceEnd, FColor::Orange, false, 2.0f);
-
-		GetWorld()->LineTraceSingleByChannel(LineTraceOut, TraceStart, TraceEnd, ECC_Visibility, TraceParams);
-		// DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Orange, false, 2.0f);
-		// DrawDebugLine(GetWorld(), ProjectileRespawnLocation, LineTraceOut.Location, FColor::Red, false, 2.0f);
+		GetWorld()->LineTraceSingleByChannel(LineTraceOutFromCrossFire, TempLocationCamera, TempLocationTraceEnd, ECC_Visibility, TraceParams);
+		GetWorld()->LineTraceSingleByChannel(LineTraceOutFromArm, TraceStart, TraceEnd, ECC_Visibility, TraceParams);
+		DrawDebugLine(GetWorld(), TraceStart, LineTraceOutFromCrossFire.ImpactPoint, FColor::Orange, false, 5.0f);
+		DrawDebugLine(GetWorld(), ProjectileRespawnLocation, LineTraceOutFromArm.ImpactPoint, FColor::Red, false, 2.0f);
 		
 		
-		if(LineTraceOut.bBlockingHit)
+		if(LineTraceOutFromArm.bBlockingHit && LineTraceOutFromCrossFire.ImpactPoint == LineTraceOutFromArm.ImpactPoint)
 		{
-			FVector TraceImpactPoint = LineTraceOut.ImpactPoint;
+			FVector TraceImpactPoint = LineTraceOutFromArm.ImpactPoint;
+			ProjectileShootRotator = (TraceImpactPoint - ProjectileRespawnLocation).Rotation();
+		}
+		else if(LineTraceOutFromCrossFire.bBlockingHit && LineTraceOutFromArm.bBlockingHit)
+		{
+			FVector TraceImpactPoint = LineTraceOutFromArm.ImpactPoint;
 			ProjectileShootRotator = (TraceImpactPoint - ProjectileRespawnLocation).Rotation();
 		}
 		else
 		{
-			ProjectileShootRotator = (TempLocation_TraceEnd - ProjectileRespawnLocation).Rotation();
+			TempLocationTraceEnd = TempLocationCamera + (TempRotatorCamera.Vector() * ShootRange * 0.25f);
+			ProjectileShootRotator = (TempLocationTraceEnd - ProjectileRespawnLocation).Rotation();
 		}
 		
 	}

@@ -39,8 +39,6 @@ void AA_RespawnPoint::RespawnNPC()
 			{
 				RespawnNPC->TargetPointArray = TargetPointArray;
 
-				// TODO
-				// TimeHandler 두고 일정 시간 후 Respawn을 Call하는 함수를 만든 다음 Delegate Bind를 변경하기
 				RespawnNPC->NPCIsDead.BindUFunction(this, TEXT("WaitRespawnNPC"));
 			}
 			else
@@ -57,7 +55,7 @@ void AA_RespawnPoint::RespawnNPC()
 
 void AA_RespawnPoint::WaitRespawnNPC()
 {
-	GetWorldTimerManager().SetTimer(RespawnHandle, this, &AA_RespawnPoint::RespawnNPC, 40.0f, false, 40.0f);
+	GetWorldTimerManager().SetTimer(RespawnHandle, this, &AA_RespawnPoint::RespawnNPC, RespawnTime, false);
 }
 
 // Called every frame

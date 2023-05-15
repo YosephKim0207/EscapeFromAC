@@ -1,33 +1,32 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "BTTaskNode_MoveInAttackTime.h"
+#include "BTTask_MoveInAttackTime.h"
 
 #include "A_AIController.h"
 #include "A_EnemyDefault.h"
 #include "C_Player.h"
-#include "NavigationSystem.h"
 #include "BehaviorTree/BlackboardComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "GameFramework/PawnMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 
-UBTTaskNode_MoveInAttackTime::UBTTaskNode_MoveInAttackTime()
+UBTTask_MoveInAttackTime::UBTTask_MoveInAttackTime()
 {
 	NodeName = TEXT("Move In Attack Time");
 
 	bNotifyTick = true;
 }
 
-EBTNodeResult::Type UBTTaskNode_MoveInAttackTime::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+EBTNodeResult::Type UBTTask_MoveInAttackTime::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	Super::ExecuteTask(OwnerComp, NodeMemory);
 
 	StopTime = OwnerComp.GetBlackboardComponent()->GetValueAsFloat(TEXT("NextSetMovingLocationTerm"));
+	bIsJump = FMath::RandBool();
+	
 	return EBTNodeResult::InProgress;
 }
 
-void UBTTaskNode_MoveInAttackTime::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
+void UBTTask_MoveInAttackTime::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
 	Super::TickTask(OwnerComp, NodeMemory, DeltaSeconds);
 
@@ -47,25 +46,9 @@ void UBTTaskNode_MoveInAttackTime::TickTask(UBehaviorTreeComponent& OwnerComp, u
 
 	if(NPC)
 	{
-		
-		
-		// TODO
-		// MovingLocation과 NPC 사이의 방향 벡터 구하고
-		// 방향 벡터를 토대로 MoveForward / MoveRight 명령
 		AA_AIController* AIController = Cast<AA_AIController>(OwnerComp.GetAIOwner());
 		if(AIController)
 		{
-			// TODO
-			// Jump나 Boost 때 Enemy MovementMode가 어떻게 변하는지 디버깅화면에서 보고 NPCLocation 결정하기
-			// if(NPC->GetCharacterMovement()->MovementMode != (int8)EMovementMode::MOVE_Flying)
-			// {
-			// 	
-			// }
-			// else
-			// {
-			// 	
-			// }
-
 			AC_Player* TargetActor = AIController->TargetPlayer;
 			FVector TargetActorLocation = TargetActor->GetActorLocation();
 			FVector NPCLocation = NPC->GetActorLocation();
@@ -88,7 +71,8 @@ void UBTTaskNode_MoveInAttackTime::TickTask(UBehaviorTreeComponent& OwnerComp, u
 			
 			FVector MovingLocation = OwnerComp.GetBlackboardComponent()->GetValueAsVector(TEXT("MovingLocation"));
 			bIsReached = false;
-			
+
+			// Move NPC
 			if(!HasReachedToDestination(NPCLocation, MovingLocation))
 			{
 				FVector MoveDirection = UKismetMathLibrary::GetDirectionUnitVector(NPCLocation, MovingLocation);
@@ -113,18 +97,20 @@ void UBTTaskNode_MoveInAttackTime::TickTask(UBehaviorTreeComponent& OwnerComp, u
 				{
 					NPC->MoveRight(-0.8f);
 				}
+
+				// Jump while Move
+				if(bIsJump)
+				{
+					NPC->Jump();
+				}
 			}
 			else
 			{
+				NPC->StopJumping();
+				
 				UE_LOG(LogTemp, Log, TEXT("BTTask_MoveInAttackTIme : HasReachedToDestinatioin!"));
 				FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
 			}
-
-			// // NPC Look Player
-			// FVector PlayerLocation = AIController->TargetPlayer->GetActorLocation();
-			// FVector PlayerDirection = UKismetMathLibrary::GetDirectionUnitVector(NPCLocation, PlayerLocation);
-			// PlayerDirection.Normalize();
-			// NPC->SetActorRotation(PlayerDirection.Rotation());
 		}
 		else
 		{
@@ -138,12 +124,12 @@ void UBTTaskNode_MoveInAttackTime::TickTask(UBehaviorTreeComponent& OwnerComp, u
 	
 }
 
-bool UBTTaskNode_MoveInAttackTime::HasReachedToDestination(FVector& Origin, FVector& Destination)
+bool UBTTask_MoveInAttackTime::HasReachedToDestination(FVector& Origin, FVector& Destination)
 {	
-	if(FVector::Distance(Origin, Destination) < 30.0f)
+	if(FMath::Abs(Origin.X - Destination.X) < 20.0f && FMath::Abs(Origin.Y - Destination.Y) < 20.0f)
 	{
 		bIsReached = true;
-
+		bIsJump = false;
 		UE_LOG(LogTemp, Log, TEXT("BTTask_MoveInAttackTime : NPC has reached!"));
 	}
 	

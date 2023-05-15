@@ -72,13 +72,13 @@ private:
 	class AA_Item* Item;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Item InterAction", meta = (AllowPrivateAccess = true))
-	bool bItemEmpasis;
+	bool bIsItemEmphasis;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item InterAction", meta = (AllowPrivateAccess = true))
 	float ItemCheckRange = 1000.0f;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack", meta = (AllowPrivateAccess = true))
-	float ShootRange = 50000.0f;
+	float ShootRange = 5000.0f;
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, meta = (AllowPrivateAccess = true))
 	float RespawnTime = 3.0f;

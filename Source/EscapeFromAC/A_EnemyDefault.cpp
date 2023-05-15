@@ -97,6 +97,16 @@ void AA_EnemyDefault::Tick(float DeltaSeconds)
 	}
 }
 
+void AA_EnemyDefault::Jump()
+{
+	Super::Jump();
+}
+
+void AA_EnemyDefault::StopJumping()
+{
+	Super::StopJumping();
+}
+
 void AA_EnemyDefault::StopFire()
 {
 	Super::StopFire();
@@ -129,14 +139,17 @@ void AA_EnemyDefault::DoAfterDead(const float& DeltaSecond)
 
 void AA_EnemyDefault::ImpulseToRagdoll(const FPointDamageEvent& PointDamageEvent)
 {
-	Super::ImpulseToRagdoll(PointDamageEvent);
 
-	BagDropLocation = GetActorLocation() + FVector(0, 0, 5.0f);
+	// BagDropLocation = GetActorLocation() + FVector(0, 0, 10.0f);
+	BagDropLocation = GetActorLocation();
 	
 	if(NPCIsDead.IsBound())
 	{
 		NPCIsDead.Execute();
 	}
+
+	Super::ImpulseToRagdoll(PointDamageEvent);
+
 }
 
 void AA_EnemyDefault::RightArmFire()
@@ -222,7 +235,7 @@ void AA_EnemyDefault::DropBag(const FVector& ActorLocation)
 		FRotator Rotator;
 		FActorSpawnParameters SpawnParameters;
 		SpawnParameters.Owner = this;
-		FVector BagRespwanLoccation = GetActorLocation();
+		FVector BagRespwanLoccation = ActorLocation;
 		BagRespwanLoccation.Z -= GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
 		World->SpawnActor<AActor>(Bag, BagRespwanLoccation, Rotator, SpawnParameters);
 	}

@@ -31,6 +31,10 @@ public:
 	
 	virtual void Tick(float DeltaSeconds) override;
 
+	virtual void Jump() override;
+
+	virtual void StopJumping() override;
+
 	virtual void StopFire() override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Patrol")

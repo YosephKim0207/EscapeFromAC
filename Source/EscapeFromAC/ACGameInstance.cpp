@@ -6,6 +6,7 @@
 #include "A_PoolManager.h"
 #include "C_Player.h"
 // #include "ToolBuilderUtil.h"
+#include "A_Bag.h"
 #include "Blueprint/UserWidget.h"
 #include "Engine/DataTable.h"
 #include "Kismet/GameplayStatics.h"
@@ -13,10 +14,10 @@
 UACGameInstance::UACGameInstance()
 {
 	FString PlayerBPPath = TEXT("/Game/BluePrint/BP_Player");
-	static ConstructorHelpers::FObjectFinder<UBlueprint> BP_Player(*PlayerBPPath);
+	static ConstructorHelpers::FClassFinder<AC_Player> BP_Player(*PlayerBPPath);
 	if(BP_Player.Succeeded())
 	{
-		Player = BP_Player.Object->GeneratedClass;
+		Player = BP_Player.Class;
 	}
 	
 	FString PickupDataTablePath = TEXT("DataTable'/Game/BluePrint/DataTable/DT_PickupItemData'");
@@ -27,11 +28,11 @@ UACGameInstance::UACGameInstance()
 		PickupItemRowNames = PickupDataTable->GetRowNames();
 	}
 
-	FString BagPath = TEXT("/Game/BluePrint/PickupItem/BP_Bag");
-	static ConstructorHelpers::FObjectFinder<UBlueprint> BP_Bag(*BagPath);
+	FString BagBPPath = TEXT("/Game/BluePrint/PickupItem/BP_Bag");
+	static ConstructorHelpers::FClassFinder<AA_Bag> BP_Bag(*BagBPPath);
 	if(BP_Bag.Succeeded())
 	{
-		Bag = BP_Bag.Object->GeneratedClass;
+		Bag = BP_Bag.Class;
 	}
 
 	

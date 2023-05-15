@@ -4,18 +4,19 @@
 
 #include "CoreMinimal.h"
 #include "BehaviorTree/BTTaskNode.h"
-#include "BTTaskNode_MoveInAttackTime.generated.h"
+#include "BTTask_MoveInAttackTime.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class ESCAPEFROMAC_API UBTTaskNode_MoveInAttackTime : public UBTTaskNode
+class ESCAPEFROMAC_API UBTTask_MoveInAttackTime : public UBTTaskNode
 {
 	GENERATED_BODY()
 
+	
 public:
-	UBTTaskNode_MoveInAttackTime();
+	UBTTask_MoveInAttackTime();
 	
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 
@@ -25,6 +26,8 @@ private:
 	bool HasReachedToDestination(FVector& Origin, FVector& Destination);
 
 	bool bIsReached = false;
+
+	bool bIsJump = false;
 
 	float AccumulateMoveTime = 0.0f;
 

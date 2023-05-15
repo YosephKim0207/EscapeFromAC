@@ -185,16 +185,20 @@ protected:
 	UFUNCTION()
 	virtual void LeftArmFire();
 	
-	UFUNCTION()
-	virtual void SetEachModularPartStat(const FModularItemStatData& ModularItemStatData);
-
 	/**
-	 * Refresh Character's Modular Data
+	 * Refresh Character's All Modular Parts Data
 	 * Take Data from Each Part's PickupItem and Assign a value to variables
 	 */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "CharacterModularData")
 	void RefreshModularParts();
 	virtual void RefreshModularParts_Implementation();
+
+	/**
+	 * Refresh Character's One Modular Parts Data
+	 */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "CharacterModularData")
+	void SetEachModularPartStat(const FModularItemStatData& ModularItemStatData);
+	virtual void SetEachModularPartStat_Implementation(const FModularItemStatData& ModularItemStatData); 
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "BodySkeletalMesh")
 	class USkeletalMeshComponent* SKM_UpperBody;
@@ -445,5 +449,5 @@ private:
 	void DoRagDoll();
 
 	UFUNCTION()
-	void DeadTest();
+	void SetCharacterDead();
 };

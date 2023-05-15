@@ -76,6 +76,10 @@ void AA_Projectile::SetActorHiddenInGame(bool IsNewHiddenState)
 			SphereComponent->BodyInstance.SetCollisionProfileName(TEXT("Projectile_Enemy"));
 			UE_LOG(LogTemp, Log, TEXT("Set %s's Collisioin Profile : %s"), *GetName(), *StaticMeshComponent->BodyInstance.GetCollisionProfileName().ToString());
 		}
+		else
+		{
+			SetActorHiddenInGame(true);
+		}
 	}
 	else
 	{

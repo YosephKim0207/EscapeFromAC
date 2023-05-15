@@ -11,7 +11,11 @@ class ESCAPEFROMAC_API AA_RespawnPoint : public AActor
 {
 	GENERATED_BODY()
 	
-public:	
+public:
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	float RespawnTime = 20.0f;
+	
 	/** Sets default values for this actor's properties */
 	AA_RespawnPoint();
 	

@@ -102,71 +102,6 @@ void AA_Character::DoAfterDead(const float& DeltaSecond)
 	return;
 }
 
-void AA_Character::RefreshModularParts_Implementation()
-{
-	for(FDataTableRowHandle PartPickupItem : ModularInventory)
-	{
-		FName PickupItemRowName = PartPickupItem.RowName;
-		FPickupItemData* PickupItemData = PartPickupItem.DataTable->FindRow<FPickupItemData>(PickupItemRowName, "");
-
-		if(PickupItemData != nullptr)
-		{
-			if(PickupItemData->ItemType != EItemType::EModular)
-			{
-				UE_LOG(LogTemp, Warning, TEXT("%s : This Item is Not Modular Item"), *PickupItemRowName.ToString());
-				return;
-			}
-			
-			UE_LOG(LogTemp, Log, TEXT("%s : PartPickupItem find in Row"), *PickupItemRowName.ToString());
-
-			FName ModularItemRowName = PickupItemData->SelectItemStatDataTable.RowName;
-			FModularItemStatData* ModularItemStatData = PickupItemData->SelectItemStatDataTable.DataTable->FindRow<FModularItemStatData>(ModularItemRowName, ""); 
-			
-			if(ModularItemStatData != nullptr)
-			{
-				UE_LOG(LogTemp, Log, TEXT("%s : ModularItem find in Row"), *ModularItemRowName.ToString());
-	
-				SetEachModularPartStat(*ModularItemStatData);
-			}
-			else
-			{
-				UE_LOG(LogTemp, Warning, TEXT("%s : ModularItem Can't find in Row"), *ModularItemRowName.ToString());
-				return;
-			}
-
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("%s : PartPickupItem Can't find Row"), *PickupItemRowName.ToString());
-			return;
-		}
-	}
-
-	// Set Total Weight
-	TotalWeight = HeadData.Weight + UpperBodyData.Weight + LeftArmData.Weight + RightArmData.Weight + LowerBodyData.Weight;
-
-	// Fix MaxWalkSpeed by MaxWeight divided by TotalWeight
-	float MaxDividedTotalWeightRate = MaxWeight / TotalWeight;
-	float MaxWalkSpeedRatePerWeight = 1.0f;
-	if(MaxDividedTotalWeightRate < MaxWalkSpeedRatePerWeight)
-	{
-		MaxWalkSpeedRatePerWeight = MaxDividedTotalWeightRate;
-		MovementComponent->MaxWalkSpeed = OriginalMaxWalkSpeed * MaxWalkSpeedRatePerWeight;
-	}
-	else
-	{
-		MovementComponent->MaxWalkSpeed = OriginalMaxWalkSpeed;
-	}
-
-	UE_LOG(LogTemp, Log, TEXT("%s : MaxWeight is %f"), *GetName(), MaxWeight);
-	UE_LOG(LogTemp, Log, TEXT("%s : TotalWeight is %f"), *GetName(), TotalWeight);
-	UE_LOG(LogTemp, Log, TEXT("%s : MaxDividedTotalWeightRate is %f"), *GetName(), MaxDividedTotalWeightRate);
-	UE_LOG(LogTemp, Log, TEXT("%s : MaxWalkSpeed is %f"), *GetName(), MovementComponent->MaxWalkSpeed);
-	
-	// Set Total Defense
-	TotalDefense = HeadData.Defense + UpperBodyData.Defense + LowerBodyData.Defense;
-}
-
 // Called every frame
 void AA_Character::Tick(float DeltaTime)
 {
@@ -175,6 +110,8 @@ void AA_Character::Tick(float DeltaTime)
 	switch(CurCharacterState)
 	{
 	case ECharacterState::EDead:
+		SetbIsShootable(false);
+		GetWorldTimerManager().ClearTimer(ShootHandle);
 		DoRagDoll();
 		DoAfterDead(DeltaTime);
 		break;
@@ -249,7 +186,7 @@ void AA_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	
 	PlayerInputComponent->BindAction("Dash", IE_Pressed,this, &AA_Character::Dash);
 	
-	PlayerInputComponent->BindAction("RespawnTest", IE_Pressed, this, &AA_Character::DeadTest);
+	PlayerInputComponent->BindAction("RespawnTest", IE_Pressed, this, &AA_Character::SetCharacterDead);
 
 }
 
@@ -637,9 +574,9 @@ float AA_Character::InternalTakePointDamage(float Damage, FPointDamageEvent cons
 		// Dead
 		if(HeadData.HP <= 0.0f)
 		{
-			UE_LOG(LogTemp, Log, TEXT("%s Kill : %s"), *EventInstigator->GetName(), *GetName());
-			SetCharacterState(ECharacterState::EDead);
+			UE_LOG(LogTemp, Log, TEXT("%s Kill : %s"), *EventInstigator->GetOwner()->GetName(), *GetName());
 			ImpulseToRagdoll(DamageEvent);
+			SetCharacterState(ECharacterState::EDead);
 		}
 		else
 		{
@@ -736,7 +673,8 @@ float AA_Character::InternalTakePointDamage(float Damage, FPointDamageEvent cons
 	// Dead State 만들기
 	if(HeadData.HP <= 0.0f)
 	{
-		UE_LOG(LogTemp, Log, TEXT("%s Kill : %s"), *DamageCauser->GetName(), *GetName());
+		UE_LOG(LogTemp, Log, TEXT("%s Kill : %s"), *DamageCauser->GetOwner()->GetName(), *GetName());
+		ImpulseToRagdoll(PointDamageEvent);
 		SetCharacterState(ECharacterState::EDead);
 	}
 
@@ -789,8 +727,10 @@ float AA_Character::DamageSpreadToOtherParts(const EModular& CurPart, const floa
 
 		if(Part->Parts == EModular::EHead && Part->HP <= 0.0f)
 		{
-			SetCharacterState(ECharacterState::EDead);
+			UE_LOG(LogTemp, Log, TEXT("%s Kill : %s"), *PointDamageEvent.HitInfo.Actor->GetOwner()->GetName(), *GetName());
+
 			ImpulseToRagdoll(PointDamageEvent);
+			SetCharacterState(ECharacterState::EDead);
 		}
 
 		if(Part->HP <= 0.0f)
@@ -799,8 +739,10 @@ float AA_Character::DamageSpreadToOtherParts(const EModular& CurPart, const floa
 
 			if(DeadCount >= 4)
 			{
-				SetCharacterState(ECharacterState::EDead);
+				UE_LOG(LogTemp, Log, TEXT("%s Kill : %s"), *PointDamageEvent.HitInfo.Actor->GetOwner()->GetName(), *GetName());
+
 				ImpulseToRagdoll(PointDamageEvent);
+				SetCharacterState(ECharacterState::EDead);
 			}
 		}
 		UE_LOG(LogTemp, Log, TEXT("%s : %d Parts is Break!"), *GetName(), DeadCount);
@@ -1124,7 +1066,7 @@ void AA_Character::DoRagDoll()
 	}
 }
 
-void AA_Character::DeadTest()
+void AA_Character::SetCharacterDead()
 {
 	SetCharacterState(ECharacterState::EDead);
 }
@@ -1323,25 +1265,21 @@ void AA_Character::StopFire()
 	bIsRightArmOnFire = false;
 }
 
-void AA_Character::SetEachModularPartStat(const FModularItemStatData& ModularItemStatData)
+void AA_Character::SetEachModularPartStat_Implementation(const FModularItemStatData& ModularItemStatData)
 {
-	FModularItemStatData ItemStatData = ModularItemStatData;
-
-	EModular Part = ItemStatData.Parts;
-
-	// TODO
-	// 디버깅용이므로 추후 삭제?
+	EModular Part = ModularItemStatData.Parts;
+	
 	const UEnum* CharModularParts = FindObject<UEnum>(ANY_PACKAGE, TEXT("EModular"), true);
 	
 	// Set each Modular Part's Stat
 	switch (Part)
 	{
 	case EModular::EUpperBody:
-		UpperBodyData = ItemStatData;
+		UpperBodyData = ModularItemStatData;
 
-		if(ItemStatData.SkeletalMesh)
+		if(ModularItemStatData.SkeletalMesh)
 		{
-			SKM_UpperBody->SetSkeletalMesh(ItemStatData.SkeletalMesh);
+			SKM_UpperBody->SetSkeletalMesh(ModularItemStatData.SkeletalMesh);
 			UpperBodyDefense = UpperBodyData.Defense;
 		}
 		else
@@ -1355,13 +1293,13 @@ void AA_Character::SetEachModularPartStat(const FModularItemStatData& ModularIte
 		break;
 		
 	case EModular::EHead:
-		HeadData = ItemStatData;
+		HeadData = ModularItemStatData;
 		HeadDefense = HeadData.Defense;
 		HeadGunHeatCoolingRate = HeadData.GunHeatCoolingRate;
 		
-		if(ItemStatData.SkeletalMesh)
+		if(ModularItemStatData.SkeletalMesh)
 		{
-			SKM_Head->SetSkeletalMesh(ItemStatData.SkeletalMesh);
+			SKM_Head->SetSkeletalMesh(ModularItemStatData.SkeletalMesh);
 		}
 		else
 		{
@@ -1374,13 +1312,13 @@ void AA_Character::SetEachModularPartStat(const FModularItemStatData& ModularIte
 		break;
 
 	case EModular::ELeftArm:
-		LeftArmData = ItemStatData;
+		LeftArmData = ModularItemStatData;
 		LeftArmDamage = LeftArmData.Damage;
 		LeftArmShootTerm = LeftArmData.ShootTerm;
 		
-		if(ItemStatData.SkeletalMesh)
+		if(ModularItemStatData.SkeletalMesh)
 		{
-			SKM_LeftArm->SetSkeletalMesh(ItemStatData.SkeletalMesh);
+			SKM_LeftArm->SetSkeletalMesh(ModularItemStatData.SkeletalMesh);
 		}
 		else
 		{
@@ -1393,13 +1331,13 @@ void AA_Character::SetEachModularPartStat(const FModularItemStatData& ModularIte
 		break;
 	
 	case EModular::ERightArm:
-		RightArmData = ItemStatData;
+		RightArmData = ModularItemStatData;
 		RightArmDamage = RightArmData.Damage;
 		RightArmShootTerm = RightArmData.ShootTerm;
 		
-		if(ItemStatData.SkeletalMesh)
+		if(ModularItemStatData.SkeletalMesh)
 		{
-			SKM_RightArm->SetSkeletalMesh(ItemStatData.SkeletalMesh);
+			SKM_RightArm->SetSkeletalMesh(ModularItemStatData.SkeletalMesh);
 		}
 		else
 		{
@@ -1412,13 +1350,13 @@ void AA_Character::SetEachModularPartStat(const FModularItemStatData& ModularIte
 		break;
 		
 	case EModular::ELowerBody:
-		LowerBodyData = ItemStatData;
+		LowerBodyData = ModularItemStatData;
 		MaxWeight = LowerBodyData.MaxWeight;
 		LowerBodyDefense = LowerBodyData.Defense;
 
-		if(ItemStatData.SkeletalMesh)
+		if(ModularItemStatData.SkeletalMesh)
 		{
-			SKM_LowerBody->SetSkeletalMesh(ItemStatData.SkeletalMesh);
+			SKM_LowerBody->SetSkeletalMesh(ModularItemStatData.SkeletalMesh);
 		}
 		else
 		{
@@ -1435,9 +1373,100 @@ void AA_Character::SetEachModularPartStat(const FModularItemStatData& ModularIte
 	{
 		UE_LOG(LogTemp, Log, TEXT("%s : Set Modular SKM & Stat"), *CharModularParts->GetNameByValue((int64)Part).ToString());
 	}
+
+	
+	// Set Total Weight
+	TotalWeight = HeadData.Weight + UpperBodyData.Weight + LeftArmData.Weight + RightArmData.Weight + LowerBodyData.Weight;
+
+	// Fix MaxWalkSpeed by MaxWeight divided by TotalWeight
+	float MaxDividedTotalWeightRate = MaxWeight / TotalWeight;
+	float MaxWalkSpeedRatePerWeight = 1.0f;
+	if(MaxDividedTotalWeightRate < MaxWalkSpeedRatePerWeight)
+	{
+		MaxWalkSpeedRatePerWeight = MaxDividedTotalWeightRate;
+		MovementComponent->MaxWalkSpeed = OriginalMaxWalkSpeed * MaxWalkSpeedRatePerWeight;
+	}
+	else
+	{
+		MovementComponent->MaxWalkSpeed = OriginalMaxWalkSpeed;
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("%s : MaxWeight is %f"), *GetName(), MaxWeight);
+	UE_LOG(LogTemp, Log, TEXT("%s : TotalWeight is %f"), *GetName(), TotalWeight);
+	UE_LOG(LogTemp, Log, TEXT("%s : MaxDividedTotalWeightRate is %f"), *GetName(), MaxDividedTotalWeightRate);
+	UE_LOG(LogTemp, Log, TEXT("%s : MaxWalkSpeed is %f"), *GetName(), MovementComponent->MaxWalkSpeed);
+	
+	// Set Total Defense
+	TotalDefense = HeadData.Defense + UpperBodyData.Defense + LowerBodyData.Defense;
 }
 
-/** Temporarly Increase MaxWalkSpeed for Dash */
+
+void AA_Character::RefreshModularParts_Implementation()
+{
+	for(FDataTableRowHandle PartPickupItem : ModularInventory)
+	{
+		FName PickupItemRowName = PartPickupItem.RowName;
+		FPickupItemData* PickupItemData = PartPickupItem.DataTable->FindRow<FPickupItemData>(PickupItemRowName, "");
+
+		if(PickupItemData != nullptr)
+		{
+			if(PickupItemData->ItemType != EItemType::EModular)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("%s : This Item is Not Modular Item"), *PickupItemRowName.ToString());
+				return;
+			}
+			
+			UE_LOG(LogTemp, Log, TEXT("%s : PartPickupItem find in Row"), *PickupItemRowName.ToString());
+
+			FName ModularItemRowName = PickupItemData->SelectItemStatDataTable.RowName;
+			FModularItemStatData* ModularItemStatData = PickupItemData->SelectItemStatDataTable.DataTable->FindRow<FModularItemStatData>(ModularItemRowName, ""); 
+			
+			if(ModularItemStatData != nullptr)
+			{
+				UE_LOG(LogTemp, Log, TEXT("%s : ModularItem find in Row"), *ModularItemRowName.ToString());
+	
+				SetEachModularPartStat(*ModularItemStatData);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("%s : ModularItem Can't find in Row"), *ModularItemRowName.ToString());
+				return;
+			}
+
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("%s : PartPickupItem Can't find Row"), *PickupItemRowName.ToString());
+			return;
+		}
+	}
+
+	// // Set Total Weight
+	// TotalWeight = HeadData.Weight + UpperBodyData.Weight + LeftArmData.Weight + RightArmData.Weight + LowerBodyData.Weight;
+	//
+	// // Fix MaxWalkSpeed by MaxWeight divided by TotalWeight
+	// float MaxDividedTotalWeightRate = MaxWeight / TotalWeight;
+	// float MaxWalkSpeedRatePerWeight = 1.0f;
+	// if(MaxDividedTotalWeightRate < MaxWalkSpeedRatePerWeight)
+	// {
+	// 	MaxWalkSpeedRatePerWeight = MaxDividedTotalWeightRate;
+	// 	MovementComponent->MaxWalkSpeed = OriginalMaxWalkSpeed * MaxWalkSpeedRatePerWeight;
+	// }
+	// else
+	// {
+	// 	MovementComponent->MaxWalkSpeed = OriginalMaxWalkSpeed;
+	// }
+	//
+	// UE_LOG(LogTemp, Log, TEXT("%s : MaxWeight is %f"), *GetName(), MaxWeight);
+	// UE_LOG(LogTemp, Log, TEXT("%s : TotalWeight is %f"), *GetName(), TotalWeight);
+	// UE_LOG(LogTemp, Log, TEXT("%s : MaxDividedTotalWeightRate is %f"), *GetName(), MaxDividedTotalWeightRate);
+	// UE_LOG(LogTemp, Log, TEXT("%s : MaxWalkSpeed is %f"), *GetName(), MovementComponent->MaxWalkSpeed);
+	//
+	// // Set Total Defense
+	// TotalDefense = HeadData.Defense + UpperBodyData.Defense + LowerBodyData.Defense;
+}
+
+/** Temporaly Increase MaxWalkSpeed for Dash */
 void AA_Character::Dash()
 {
 	
