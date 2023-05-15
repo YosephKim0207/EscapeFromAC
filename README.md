@@ -2,7 +2,7 @@
 
 ![EscapeFromAC_Default](https://user-images.githubusercontent.com/46564046/235349657-70bffb32-990e-4209-841a-a9af6a830dee.gif)
 
-[전체영상링크](https://youtu.be/VfgMDnHjERs)
+[전체영상링크](https://youtu.be/z8HBJEYXrPg)
 
 ---
 
