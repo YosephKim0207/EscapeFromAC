@@ -499,6 +499,6 @@ void AA_Character::ResetJumpState()
 
 ---
 
-### 비헤이비어 트리
+### NPC AI 비헤이비어 트리
 	
 ![image](https://github.com/YosephKim0207/EscapeFromAC/assets/46564046/29967ed6-d01d-4d5e-8ba3-7c1d32f85c7f)
