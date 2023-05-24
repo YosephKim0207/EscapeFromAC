@@ -73,7 +73,6 @@ T* AA_PoolManager::GetThisObject(UClass* Class, const FVector& Location, const F
 	}
 
 	// Pool doesn't Exist
-	
 	UE_LOG(LogTemp, Warning, TEXT("PoolManager : %s doesn't have Pool"), *Class->GetName());
 	
 	TArray<AActor*> NewPool;

@@ -1153,9 +1153,7 @@ void AA_Character::RightArmFire()
 		AA_PoolManager* PoolManager = ACGameInstance->GetPoolManager();
 		if(PoolManager)
 		{
-			// TODO PoolTEST
 			AA_Projectile* Projectile = PoolManager->GetThisObject<AA_Projectile>(TempProjectile, ProjectileRespawnLocation + (ProjectileShootRotator.Vector() * 10.0f), ProjectileShootRotator, SpawnParameters);
-			// AA_Projectile* Projectile = World->SpawnActor<AA_Projectile>(TempProjectile, ProjectileRespawnLocation + (ProjectileShootRotator.Vector() * 10.0f), ProjectileShootRotator, SpawnParameters);
 
 			if(Projectile != nullptr)
 			{
