@@ -407,7 +407,7 @@ void AA_Character::BoostEffect_Implementation()
 	}
 }
 
-bool AA_Character::GetShootable()
+bool AA_Character::GetbIsShootable()
 {
 	return bIsShootable;
 }
@@ -786,8 +786,6 @@ float AA_Character::GetMaxBoostOverHeatCoolTime()
 	return MaxBoostOverHeatCoolTime;
 }
 
-// TODO
-// 임시함수
 void AA_Character::DoRepair_Implementation(EModular Part,float RepairValue)
 {
 	switch (Part)
@@ -1111,12 +1109,12 @@ void AA_Character::ImpulseToRagdoll(const FPointDamageEvent& PointDamageEvent)
 
 void AA_Character::RightArmFireHandler()
 {
-	if(!GetShootable() || bRightGunIsOverHeat)
+	if(!GetbIsShootable() || bRightGunIsOverHeat)
 	{
 		UE_LOG(LogTemp, Log, TEXT("RightArmFireHandler Can't work"));
 		UE_LOG(LogTemp, Log, TEXT("Current Right Gun Heat : %f"), CurrentRightGunHeat);
 		UE_LOG(LogTemp, Log, TEXT("Right Gun OverHeat : %d"), bRightGunIsOverHeat ? 1 : 0);
-		UE_LOG(LogTemp, Log, TEXT("GetShootable : %s"), GetShootable() ? "True" : "False");
+		UE_LOG(LogTemp, Log, TEXT("GetShootable : %s"), GetbIsShootable() ? "True" : "False");
 		return;
 	}
 	
@@ -1137,14 +1135,14 @@ void AA_Character::RightArmFire()
 
 	UE_LOG(LogTemp, Log, TEXT("RightHandFire Enter!"));
 	
-	if(!GetShootable() || !GetbIsRightArmOnFire())
+	if(!GetbIsShootable() || !GetbIsRightArmOnFire())
 	{
 		UE_LOG(LogTemp, Log, TEXT("%s : Can't Shoot!"), *GetName());
-		UE_LOG(LogTemp, Warning, TEXT("bIsShootable : %d / bIsCanRightArmFire : %d"), GetShootable(), GetbIsRightArmOnFire());
+		UE_LOG(LogTemp, Warning, TEXT("bIsShootable : %d / bIsCanRightArmFire : %d"), GetbIsShootable(), GetbIsRightArmOnFire());
 		return;
 	}
 	
-	if(GetShootable() && GetbIsRightArmOnFire())
+	if(GetbIsShootable() && GetbIsRightArmOnFire())
 	{
 		FActorSpawnParameters SpawnParameters;
 		SpawnParameters.Owner = this;
@@ -1186,12 +1184,12 @@ void AA_Character::RightArmFire()
 
 void AA_Character::LeftArmFireHandler()
 {
-	if(!GetShootable() || bLeftGunIsOverHeat)
+	if(!GetbIsShootable() || bLeftGunIsOverHeat)
 	{
 		UE_LOG(LogTemp, Log, TEXT("LeftArmFireHandler Can't work"));
 		UE_LOG(LogTemp, Log, TEXT("Current Left Gun Heat : %f"), CurrentLeftGunHeat);
 		UE_LOG(LogTemp, Log, TEXT("Left Gun OverHeat : %d"), bLeftGunIsOverHeat ? 1 : 0);
-		UE_LOG(LogTemp, Log, TEXT("GetShootable : %s"), GetShootable() ? "True" : "False");
+		UE_LOG(LogTemp, Log, TEXT("GetShootable : %s"), GetbIsShootable() ? "True" : "False");
 		return;
 	}
 	
@@ -1206,12 +1204,12 @@ void AA_Character::LeftArmFireHandler()
 
 void AA_Character::LeftArmFire()
 {	
-	if(!GetShootable() || !GetbIsLeftArmOnFire())
+	if(!GetbIsShootable() || !GetbIsLeftArmOnFire())
 	{	
 		return;	
 	}
 
-	if(GetShootable() && GetbIsLeftArmOnFire())
+	if(GetbIsShootable() && GetbIsLeftArmOnFire())
 	{
 		FActorSpawnParameters SpawnParameters;
 		SpawnParameters.Owner = this;
@@ -1440,30 +1438,6 @@ void AA_Character::RefreshModularParts_Implementation()
 			return;
 		}
 	}
-
-	// // Set Total Weight
-	// TotalWeight = HeadData.Weight + UpperBodyData.Weight + LeftArmData.Weight + RightArmData.Weight + LowerBodyData.Weight;
-	//
-	// // Fix MaxWalkSpeed by MaxWeight divided by TotalWeight
-	// float MaxDividedTotalWeightRate = MaxWeight / TotalWeight;
-	// float MaxWalkSpeedRatePerWeight = 1.0f;
-	// if(MaxDividedTotalWeightRate < MaxWalkSpeedRatePerWeight)
-	// {
-	// 	MaxWalkSpeedRatePerWeight = MaxDividedTotalWeightRate;
-	// 	MovementComponent->MaxWalkSpeed = OriginalMaxWalkSpeed * MaxWalkSpeedRatePerWeight;
-	// }
-	// else
-	// {
-	// 	MovementComponent->MaxWalkSpeed = OriginalMaxWalkSpeed;
-	// }
-	//
-	// UE_LOG(LogTemp, Log, TEXT("%s : MaxWeight is %f"), *GetName(), MaxWeight);
-	// UE_LOG(LogTemp, Log, TEXT("%s : TotalWeight is %f"), *GetName(), TotalWeight);
-	// UE_LOG(LogTemp, Log, TEXT("%s : MaxDividedTotalWeightRate is %f"), *GetName(), MaxDividedTotalWeightRate);
-	// UE_LOG(LogTemp, Log, TEXT("%s : MaxWalkSpeed is %f"), *GetName(), MovementComponent->MaxWalkSpeed);
-	//
-	// // Set Total Defense
-	// TotalDefense = HeadData.Defense + UpperBodyData.Defense + LowerBodyData.Defense;
 }
 
 /** Temporaly Increase MaxWalkSpeed for Dash */
@@ -1555,18 +1529,3 @@ void AA_Character::SetCharacterState(ECharacterState NewState)
 		UE_LOG(LogTemp, Warning, TEXT("Character State : %s"), *CharCharacterState->GetNameByValue((int8)CurCharacterState).ToString());
 	}
 }
-
-// TODO
-// void AA_Character::BeginCrouch()
-// {
-// 	if(bIsMovable)
-// 	{
-// 		
-// 	}
-// 	Crouch();
-// }
-//
-// void AA_Character::EndCrouch()
-// {
-// 	UnCrouch();
-// }

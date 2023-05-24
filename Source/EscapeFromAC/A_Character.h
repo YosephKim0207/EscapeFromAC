@@ -105,7 +105,7 @@ public:
 	void BoostEffect_Implementation();
 
 	UFUNCTION()
-	bool GetShootable();
+	bool GetbIsShootable();
 
 	UFUNCTION(BlueprintCallable)
 	void SetbIsShootable(bool NewState);
