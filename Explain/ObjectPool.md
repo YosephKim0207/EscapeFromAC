@@ -1,16 +1,11 @@
-# EscapeFromAC
+# 오브젝트 풀
 
-![EscapeFromAC_Final](https://github.com/YosephKim0207/Resume/assets/46564046/5185392a-2b47-4039-9736-62f4440b5dd6)
-
-[전체영상링크](https://youtu.be/z8HBJEYXrPg)
+![오브젝트풀링 성능테스트](https://user-images.githubusercontent.com/46564046/235351089-926c57bd-8237-45f6-97b5-52238a8c8360.gif)
 
 ---
 
 
 ### 오브젝트 풀링
-
-![오브젝트풀링 성능테스트](https://user-images.githubusercontent.com/46564046/235351089-926c57bd-8237-45f6-97b5-52238a8c8360.gif)
-
 
 - 원하는 클래스에 대한 오브젝트 풀을 자유롭게 생성 및 사용
 - 프로파일러 기준 평균 게임 스레드 비용 2.43ms 감소
@@ -102,4 +97,52 @@ T* AA_PoolManager::GetThisObject(UClass* Class, const FVector& Location, const F
 ```
 
 </details>
+	
+	
+	
+[A_Character 전체 코드 바로가기]([https://github.com/YosephKim0207/EscapeFromAC/blob/main/Source/EscapeFromAC/A_Character.cpp])
+<details>
+<summary>A_Character에서의 PoolManager 사용 코드 펼치기</summary>
 
+
+
+```cpp
+if(GetbIsShootable() && GetbIsRightArmOnFire())
+	{
+		FActorSpawnParameters SpawnParameters;
+		SpawnParameters.Owner = this;
+		SpawnParameters.Instigator = GetInstigator();
+
+		UWorld* World = GetWorld();
+		UACGameInstance* ACGameInstance = Cast<UACGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+		AA_PoolManager* PoolManager = ACGameInstance->GetPoolManager();
+		if(PoolManager)
+		{
+			AA_Projectile* Projectile = PoolManager->GetThisObject<AA_Projectile>(TempProjectile, ProjectileRespawnLocation + (ProjectileShootRotator.Vector() * 10.0f), ProjectileShootRotator, SpawnParameters);
+
+			if(Projectile != nullptr)
+			{
+				SetProjectileData(Projectile, EModular::ERightArm, true);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Log, TEXT("%s : %s Pool is empty! Do SpawnActor"), *GetName(), *TempProjectile->GetName());
+				Projectile = World->SpawnActor<AA_Projectile>(TempProjectile, ProjectileRespawnLocation + (ProjectileShootRotator.Vector() * 10.0f), ProjectileShootRotator, SpawnParameters);
+				if(Projectile != nullptr)
+				{
+					SetProjectileData(Projectile, EModular::ERightArm, false);
+				}
+				else
+				{
+					UE_LOG(LogTemp, Warning, TEXT("%s : Get Projectile Fail!"), *GetName());
+				}
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("%s : PoolManager is nullPtr!"), *GetName());
+		}
+	}
+```
+
+</details>
