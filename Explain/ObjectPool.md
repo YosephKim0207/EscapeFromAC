@@ -2,6 +2,15 @@
 
 ![오브젝트풀링 성능테스트](https://user-images.githubusercontent.com/46564046/235351089-926c57bd-8237-45f6-97b5-52238a8c8360.gif)
 
+<img width="800" alt="풀링미적용" src="https://github.com/YosephKim0207/EscapeFromAC/assets/46564046/86f76033-a176-4300-b5d9-457d3a53167b">
+
+<오브젝ㅌ 풀링 적용 전>
+
+
+<img width="800" alt="풀링적용" src="https://github.com/YosephKim0207/EscapeFromAC/assets/46564046/1a941e2b-d42e-4504-904d-e28aa4b3d217">
+
+<오브젝트 풀링 적용 후>
+
 ---
 
 
