@@ -1,6 +1,6 @@
 # EscapeFromAC
 
-![EscapeFromAC_Default](https://user-images.githubusercontent.com/46564046/235349657-70bffb32-990e-4209-841a-a9af6a830dee.gif)
+![EscapeFromAC_Final](https://github.com/YosephKim0207/Resume/assets/46564046/5185392a-2b47-4039-9736-62f4440b5dd6)
 
 [전체영상링크](https://youtu.be/z8HBJEYXrPg)
 
