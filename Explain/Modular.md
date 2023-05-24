@@ -1,6 +1,6 @@
-# 모듈식
+# 모듈식 캐릭터
 
-![EscapeFromAC_Final](https://github.com/YosephKim0207/Resume/assets/46564046/5185392a-2b47-4039-9736-62f4440b5dd6)
+![Modular](https://github.com/YosephKim0207/EscapeFromAC/assets/46564046/b3f9489e-3e05-4bf2-9edf-806c4d8edb2c)
 
 ---
 
