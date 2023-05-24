@@ -109,7 +109,7 @@ T* AA_PoolManager::GetThisObject(UClass* Class, const FVector& Location, const F
 	
 	
 	
-[A_Character 전체 코드 바로가기]([https://github.com/YosephKim0207/EscapeFromAC/blob/main/Source/EscapeFromAC/A_Character.cpp])
+[A_Character 전체 코드 바로가기](https://github.com/YosephKim0207/EscapeFromAC/blob/main/Source/EscapeFromAC/A_Character.cpp)
 <details>
 <summary>A_Character에서의 PoolManager 사용 코드 펼치기</summary>
 
