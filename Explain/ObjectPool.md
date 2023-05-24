@@ -16,8 +16,10 @@
 
 ### 오브젝트 풀링
 
-- 원하는 클래스에 대한 오브젝트 풀을 자유롭게 생성 및 사용
+- 슈팅 게임으로서 빈번한 Projectile 액터 생성 및 제거로 인한 메모리 할당 / 해제 및 GC와 메모리 파편화 문제
 - 프로파일러 기준 평균 게임 스레드 성능 13% 향상 (2.43ms 감소)
+- 원하는 클래스에 대한 오브젝트 풀을 자유롭게 생성 및 사용
+
 
 [PoolManager 전체 코드 바로가기](https://github.com/YosephKim0207/EscapeFromAC/blob/main/Source/EscapeFromAC/A_PoolManager.h)
 <details>
