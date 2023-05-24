@@ -4,7 +4,7 @@
 
 <img width="800" alt="풀링미적용" src="https://github.com/YosephKim0207/EscapeFromAC/assets/46564046/86f76033-a176-4300-b5d9-457d3a53167b">
 
-<오브젝ㅌ 풀링 적용 전>
+<오브젝트 풀링 적용 전>
 
 
 <img width="800" alt="풀링적용" src="https://github.com/YosephKim0207/EscapeFromAC/assets/46564046/1a941e2b-d42e-4504-904d-e28aa4b3d217">
@@ -17,7 +17,7 @@
 ### 오브젝트 풀링
 
 - 원하는 클래스에 대한 오브젝트 풀을 자유롭게 생성 및 사용
-- 프로파일러 기준 평균 게임 스레드 비용 2.43ms 감소
+- 프로파일러 기준 평균 게임 스레드 성능 13% 향상 (2.43ms 감소)
 
 [PoolManager 전체 코드 바로가기](https://github.com/YosephKim0207/EscapeFromAC/blob/main/Source/EscapeFromAC/A_PoolManager.h)
 <details>
