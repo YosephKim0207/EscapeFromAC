@@ -30,9 +30,8 @@
 해결
 - Class를 Key, 오브젝트 풀을 Value로 하는 TMap 형태의 PoolManager를 GameInstance에서 관리
 - 템플릿을 통해 Class에 대한 오브젝트 풀을 조회 및 액터르 반환하는 함수 구현
-- 구현된 오브젝트 풀링을 통해 프로파일러 기준  13% 개선
 - 원하는 클래스에 대한 오브젝트 풀을 자유롭게 생성 및 사용
-- 프로파일러 기준 평균 게임 스레드 비용 2.43ms 감소
+- 프로파일러 기준 평균 게임 스레드 비용 13% 향상
 
 [PoolManager 전체 코드 바로가기](https://github.com/YosephKim0207/EscapeFromAC/blob/main/Source/EscapeFromAC/A_PoolManager.h)
 <details>
