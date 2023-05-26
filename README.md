@@ -17,21 +17,37 @@
 
 ---
 
+### 오브젝트 풀
+
+![오브젝트풀링 성능테스트](https://user-images.githubusercontent.com/46564046/235351089-926c57bd-8237-45f6-97b5-52238a8c8360.gif)
+
+<img width="800" alt="풀링미적용" src="https://github.com/YosephKim0207/EscapeFromAC/assets/46564046/86f76033-a176-4300-b5d9-457d3a53167b">
+
+<오브젝트 풀링 적용 전>
+
+
+<img width="800" alt="풀링적용" src="https://github.com/YosephKim0207/EscapeFromAC/assets/46564046/1a941e2b-d42e-4504-904d-e28aa4b3d217">
+
+<오브젝트 풀링 적용 후>
+
+---
+
+
 ### 오브젝트 풀링
 
-![오브젝트풀링 성능테스트](https://user-images.githubusercontent.com/46564046/235351089-926c57bd-8237-45f6-97b5-52238a8c8360.gif)
-
 문제
-- 사용시 직관적이지 못한 일반적으로 사용되는 언리얼 오브젝트 풀링 코드
+- 전투시 성능 저하
 
 원인
-- 오브젝트 풀 이용을 원하는 액터에 대해 별도의 컴포넌트 추가 없이 사용을 희망
+- 슈팅 게임으로서 빈번한 Projectile 액터 생성 및 제거로 인한 메모리 할당 / 해제 및 GC와 메모리 파편화 문제
 
 해결
-- Class를 Key, 오브젝트 풀을 Value로 하는 TMap 형태의 PoolManager를 GameInstance에서 관리
-- 템플릿을 통해 Class에 대한 오브젝트 풀을 조회 및 액터르 반환하는 함수 구현
-- 원하는 클래스에 대한 오브젝트 풀을 자유롭게 생성 및 사용
-- 프로파일러 기준 평균 게임 스레드 비용 13% 향상
+- GameInstance에 오브젝트 풀 템플릿을 만들어 오브젝트 풀 이용을 원하는 클래스는 자유롭게 풀 생성 및 사용
+
+결과
+- 프로파일러 기준 평균 게임 스레드 성능 13% 향상
+
+
 
 [PoolManager 전체 코드 바로가기](https://github.com/YosephKim0207/EscapeFromAC/blob/main/Source/EscapeFromAC/A_PoolManager.h)
 <details>
@@ -77,7 +93,6 @@ T* AA_PoolManager::GetThisObject(UClass* Class, const FVector& Location, const F
 	}
 
 	// Pool doesn't Exist
-	
 	UE_LOG(LogTemp, Warning, TEXT("PoolManager : %s doesn't have Pool"), *Class->GetName());
 	
 	TArray<AActor*> NewPool;
@@ -120,15 +135,72 @@ T* AA_PoolManager::GetThisObject(UClass* Class, const FVector& Location, const F
 ```
 
 </details>
+	
+	
+	
+[A_Character 전체 코드 바로가기](https://github.com/YosephKim0207/EscapeFromAC/blob/main/Source/EscapeFromAC/A_Character.cpp)
+<details>
+<summary>A_Character에서의 PoolManager 사용 코드 펼치기</summary>
+
+
+
+```cpp
+if(GetbIsShootable() && GetbIsRightArmOnFire())
+	{
+		FActorSpawnParameters SpawnParameters;
+		SpawnParameters.Owner = this;
+		SpawnParameters.Instigator = GetInstigator();
+
+		UWorld* World = GetWorld();
+		UACGameInstance* ACGameInstance = Cast<UACGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+		AA_PoolManager* PoolManager = ACGameInstance->GetPoolManager();
+		if(PoolManager)
+		{
+			AA_Projectile* Projectile = PoolManager->GetThisObject<AA_Projectile>(TempProjectile, ProjectileRespawnLocation + (ProjectileShootRotator.Vector() * 10.0f), ProjectileShootRotator, SpawnParameters);
+
+			if(Projectile != nullptr)
+			{
+				SetProjectileData(Projectile, EModular::ERightArm, true);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Log, TEXT("%s : %s Pool is empty! Do SpawnActor"), *GetName(), *TempProjectile->GetName());
+				Projectile = World->SpawnActor<AA_Projectile>(TempProjectile, ProjectileRespawnLocation + (ProjectileShootRotator.Vector() * 10.0f), ProjectileShootRotator, SpawnParameters);
+				if(Projectile != nullptr)
+				{
+					SetProjectileData(Projectile, EModular::ERightArm, false);
+				}
+				else
+				{
+					UE_LOG(LogTemp, Warning, TEXT("%s : Get Projectile Fail!"), *GetName());
+				}
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("%s : PoolManager is nullPtr!"), *GetName());
+		}
+	}
+```
+
+</details>
+
 
 	
 	
 ### 모듈식 캐릭터 생성
 
+![Modular](https://github.com/YosephKim0207/EscapeFromAC/assets/46564046/b3f9489e-3e05-4bf2-9edf-806c4d8edb2c)
+
+---
+
+### 모듈식 캐릭터 생성
+
+<img width="680" alt="스크린샷 2023-05-24 오후 9 49 17" src="https://github.com/YosephKim0207/EscapeFromAC/assets/46564046/45ed8746-035b-4d93-94ff-d4621acac711">
+
 - 포즈복사, 메시병합 대비 구성 비용 및 게임 스레드 비용이 낮은 마스터 포즈 컴포넌트 이용
 
 ### 부위 파괴 및 능력치에 따른 기능 저하 구현
-
 
 [A_Chracter 전체 코드 바로가기](https://github.com/YosephKim0207/EscapeFromAC/blob/main/Source/EscapeFromAC/A_Character.cpp)
 <details>
